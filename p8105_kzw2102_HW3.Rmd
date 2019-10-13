@@ -201,6 +201,7 @@ accel_data=
 # tidy the data
 accel_tidy_data=
   accel_data %>% 
+  janitor::clean_names()
   
 ```
 
