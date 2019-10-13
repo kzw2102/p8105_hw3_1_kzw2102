@@ -192,9 +192,9 @@ brfss_df %>%
   geom_col() +
   facet_grid(~year)
 
-plot2006
+plot2006_2010
 ```
-DESCRIPTION
+In this dataset we have `r nrow(brfss_df)` rows and `r ncol(brfss_df)` variables. In the year 2002, the states that have more than 7 locations were the following: Connecticut, Florida, Massachusetts, North Carolina, New Jersey,  and Pennsylvania. In 2010, the following states had more than 7 locations: California, Colorado, Florida, Massachusetts, Maryland, North Carolina, Nebraska, New Jersey, New York, Ohio, Penssylvania, South Carolina, Texas, and Washington. 
 
 # Problem 3
 ```{r}
@@ -207,12 +207,55 @@ accel_tidy_data=
   janitor::clean_names() %>% 
   pivot_longer(
     activity_1:activity_1440,
-    names_to="activity minute",
-    values_to="activity amount"
+    names_to="activity_minute",
+    values_to = "activity_amount"
   ) %>% 
   mutate(
-    type = if_else(day == c(“Saturday”, “Sunday”), “weekend”, “weekday”)
+    type = if_else(day == c("Saturday", "Sunday"), "weekend", "weekday"),
+    activity_minute = str_replace(activity_minute, "activity_", ""),
+    activity_minute=as.numeric(activity_minute)
+  )
+
+#counting how many entries: 50400
+accel_tidy_data %>% 
+  summarize(
+    count_obs=n()
   )
 ```
+In this dataset, there are `r nrow(accel_tidy_data)` rows and `r ncol(accel_tidy_data)` columns/variables. These variables include week number, day of the the week, activity minute, activity amount, and whether it was a weekday or weekend. 
 
+## creating a total activity per each day 
+```{r}
+accel_tidy_data %>% 
+  group_by(week,day) %>% 
+  summarize(
+    sum_activity=sum(activity_amount),
+  ) %>% 
+  knitr::kable()
+```
+It appears that the most activity tends to be on Mondays and the least activity on Saturdays. 
 
+## single-panel plot 
+```{r}
+accel_plot=
+  accel_tidy_data %>% 
+  mutate(
+    hour=activity_minute%/%60
+  ) %>% 
+  group_by(day,hour) %>% 
+  summarize(sum_activity=
+    sum(activity_amount),
+  ) %>% 
+  ggplot(aes(x=hour, y=sum_activity, color=day))+ geom_line()+
+  labs(
+    title="Amount of activity per hour per day of the week",
+    x = "Activity hour",
+    y = "Activity Amount",
+    color = 'Per Day'
+  ) +
+  theme(legend.position="bottom")
+
+accel_plot = accel_plot + aes(colour=factor(day))
+accel_plot
+```
+Based off of this, we can see that on Fridays, the most amount of activity are typically towards the end of the day, whereas on Sundays it is in the middle of the day. 
