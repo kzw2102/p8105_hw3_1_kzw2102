@@ -211,7 +211,7 @@ accel_tidy_data=
     values_to="activity amount"
   ) %>% 
   mutate(
-    weekend = 
+    type = if_else(day == c(“Saturday”, “Sunday”), “weekend”, “weekday”)
   )
 ```
 
