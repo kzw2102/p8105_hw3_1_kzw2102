@@ -73,25 +73,28 @@ instacart_plot
 
 ## table that shows the three most popular in each of the aisles "baking ingredients", "dog food care", "packaged vegetables fruits"
 
-??????
 ```{r table}
 top_three_df=
-instacart %>% 
-  group_by(aisle, product_name) %>% 
-  filter(
-    aisle==c("baking ingredients","dog food care", "packaged vegetables fruits")
+  instacart %>% 
+  group_by(aisle, product_name, product_id) %>% 
+  summarize(
+    count_prod=n()
+  ) %>% filter(
+    aisle %in% c("baking ingredients","dog food care", "packaged vegetables fruits")
   ) %>% 
   group_by(aisle) %>% 
-  top_n(3, n_obs)
+  top_n(3, count_prod) %>% 
+  arrange(desc(count_prod)) %>% 
+  rename("Product Name" = product_name, "Product ID" = product_id, "Number of times ordered"= count_prod) %>% 
+  knitr::kable()
 
-
+top_three_df
 ```
 ## table for mean hour of day at which Pink Lady Apples and Coffe Ice Cream were ordered
-?? sometimes prints sometimes doesnt
 ```{r pinklady table}
 mean_hour_df=
 instacart %>% 
-  filter(product_name == c("Pink Lady Apples", "Coffe Ice Cream")) %>% 
+  filter(product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
   select(product_name, order_dow, order_hour_of_day) %>% 
   group_by(product_name, order_dow) %>% 
   summarize(
@@ -106,9 +109,10 @@ instacart %>%
   )  %>% 
 knitr::kable(digits=2)
 
+mean_hour_df
 ```
 
-In this dataset, there are `r nrow(instacart)` rows and `r ncol(instacart)` variables/columns.There are a total of 134 aisles, where aisle 83, also known as "Fresh vegetables" contains the most amount of items, which is (150,609 items). Majority of the aisles have under 4000 products, based off of the plot. 
+In this dataset, there are `r nrow(instacart)` rows and `r ncol(instacart)` variables/columns.There are a total of 134 aisles, where aisle 83, also known as "Fresh vegetables" contains the most amount of items, which is (150,609 items). Majority of the aisles have under 4000 products, based off of the plot. The most common items in the "baking ingredients" category are light brown sugar, cane sugar, and baking soda. For  the "packaged vegetables fruits" category, the most common items are organic baby spinach, organic raspberries, and organic blueberries. For the category "dog food care", the most common items are snack sticks chicken & rice recipe dog treats, organix chicken & brown rice recipe, and small dog biscuits. The following table displas the average hour the products"pink lady apple" and "coffee ice cream" were ordered. 
 
 # Question 2
 ```{r}
@@ -121,17 +125,19 @@ brfss_df=
   brfss_smart2010 %>% 
   janitor::clean_names() %>% 
   rename(location_abbr=locationabbr, location_desc=locationdesc, resp_id=respid) %>%
-  filter(topic=="Overall Health") %>% 
-  filter(response==c("Excellent", "Very Good","Good", "Fair", "Poor")) %>% 
-  response = factor(c("Excellent", "Very Good","Good", "Fair", "Poor"), levels=c("Excellent", "Very Good","Good", "Fair", "Poor"))
-???
+  filter(topic=="Overall Health", response %in% c("Excellent", "Very good","Good", "Fair", "Poor")) %>% 
+  mutate(
+    response=as.character(response),
+    response = factor(response, levels=c("Excellent", "Very good","Good", "Fair", "Poor"))
+  )
 ```
 
 ### in 2002, which states observed 7 or more locations?
 ```{r}
 brfss_df %>% 
   filter(year==2002) %>% 
-  group_by(location_abbr) %>% 
+  group_by(location_abbr) %>%  #groups by different states
+  distinct(location_desc) %>%  #counts numbero of unique 
   summarize(
     n_locations=n()
   ) %>% 
@@ -144,6 +150,7 @@ brfss_df %>%
 brfss_df %>% 
   filter(year==2010) %>% 
   group_by(location_abbr) %>% 
+  distinct(location_desc) %>% 
   summarize(
     n_locations=n()
   ) %>% 
@@ -156,7 +163,7 @@ brfss_excellent_df=
   brfss_df %>% 
   filter(response=="Excellent") %>% 
   select(year, location_abbr, location_desc, data_value) %>% 
-  group_by(location_desc, year) %>% 
+  group_by(location_abbr, year) %>% 
   summarize(
     average_data_value= mean(data_value)
   )
@@ -173,26 +180,22 @@ brfss_excellent_plot=
   )
 
 brfss_excellent_plot
-
-## not workign again. :(
 ```
 
 ### two panel plot that shows the distribution of of data_value responses among locations in NY State
 ```{r}
 ##panels you use patchwork
-plot2006= 
+plot2006_2010= 
 brfss_df %>% 
-  filter(year=="2006", location_abbr== "NY") %>% 
-  ggplot(aes(x=location_desc, y=data_value, color=response))+
-           geom_point(alpha=0.5)
-  
-plot2010 =
-  brfss_df %>% 
-  filter(year=="2010", location_abbr== "NY") %>% 
-  ggplot(aes(x=location_desc, y=data_value, color=response))+
-           geom_point(alpha=0.5)
-plot2006 / plot2010
+  filter(year%in%c("2006", "2010"), location_abbr== "NY") %>% 
+  ggplot(aes(x=response, y=data_value, fill=response)) + 
+  geom_col() +
+  facet_grid(~year)
+
+plot2006
 ```
+DESCRIPTION
+
 # Problem 3
 ```{r}
 accel_data=
@@ -201,8 +204,15 @@ accel_data=
 # tidy the data
 accel_tidy_data=
   accel_data %>% 
-  janitor::clean_names()
-  
+  janitor::clean_names() %>% 
+  pivot_longer(
+    activity_1:activity_1440,
+    names_to="activity minute",
+    values_to="activity amount"
+  ) %>% 
+  mutate(
+    weekend = 
+  )
 ```
 
 
